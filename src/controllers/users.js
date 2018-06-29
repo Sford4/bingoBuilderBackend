@@ -9,10 +9,37 @@ module.exports = {
 	},
 
 	newUser: async (req, res, next) => {
-		const newUser = new User(req.value.body);
-		const user = await newUser.save();
+		try {
+			const newUser = new User(req.value.body);
+			// CHECK IF AN EMAIL OR USERNAME WAS ALREADY USED
+			const uniqueUserPromise = User.count({ userName: req.value.body.userName }, (err, count) => {
+				if (count > 0) {
+					throw 'That username is taken!';
+				}
+			});
+			const uniqueEmailPromise = User.count({ email: req.value.body.email }, (err, count) => {
+				if (count > 0) {
+					throw 'That email has already been used! Go to login?';
+				}
+			});
+			Promise.all([uniqueUserPromise, uniqueEmailPromise]);
 
-		res.status(201).json(user);
+			const user = await newUser.save();
+			res.status(201).json(user);
+		} catch (err) {
+			console.log('error caught here', err);
+			if (
+				err.toString() === ['That email has already been used! Go to login?'] ||
+				err.toString() === ['That username is taken!'] ||
+				err.toString() === ['That email has already been used! Go to login?', 'That username is taken!']
+			) {
+				res.status(400).json({
+					error: {
+						message: err.toString()
+					}
+				});
+			}
+		}
 	},
 
 	getUser: async (req, res, next) => {
@@ -45,7 +72,6 @@ module.exports = {
 			ref: 'board',
 			select: 'model make year -_id'
 		});
-
 		res.status(200).json(user.cars);
 	},
 
@@ -57,5 +83,15 @@ module.exports = {
 		});
 
 		res.status(200).json(newBoard);
+	},
+
+	saveUnfinishedBoard: async (req, res, next) => {
+		const user = await User.findByIdAndUpdate(
+			req.value.params.id,
+			{ saved: req.body.saved },
+			{ multi: true },
+			function(err, numberAffected) {}
+		);
+		res.status(200).json(user);
 	}
 };

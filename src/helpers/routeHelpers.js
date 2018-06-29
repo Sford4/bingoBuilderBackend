@@ -18,6 +18,7 @@ module.exports = {
 
 	validateBody: schema => {
 		return (req, res, next) => {
+			// console.log('request at validation', req.body.obj);
 			const result = Joi.validate(req.body, schema);
 
 			if (result.error) {
@@ -35,19 +36,19 @@ module.exports = {
 	schemas: {
 		userSchema: Joi.object().keys({
 			userName: Joi.string().required(),
-			email: Joi.string().email().required()
+			email: Joi.string().email().required(),
+			password: Joi.string()
 		}),
 
 		userOptionalSchema: Joi.object().keys({
 			firstName: Joi.string(),
 			lastName: Joi.string(),
-			email: Joi.string().email()
-		}),
-
-		userCarSchema: Joi.object().keys({
-			make: Joi.string().required(),
-			model: Joi.string().required(),
-			year: Joi.number().required()
+			email: Joi.string().email(),
+			saved: Joi.object().keys({
+				title: Joi.string(),
+				keywords: Joi.array().items(Joi.string()),
+				squares: Joi.array().items(Joi.string())
+			})
 		}),
 
 		boardSchema: Joi.object().keys({

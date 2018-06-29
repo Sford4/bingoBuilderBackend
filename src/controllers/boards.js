@@ -20,7 +20,9 @@ module.exports = {
 		board.keywords.unshift(board.title);
 		board.keywords.unshift(creator.userName);
 		await board.save();
-
+		if (creator.saved) {
+			creator.saved = null;
+		}
 		creator.boards.push(board);
 		await creator.save();
 

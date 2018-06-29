@@ -9,7 +9,8 @@ const UserSchema = new Schema({
 			type: Schema.Types.ObjectId,
 			ref: 'board'
 		}
-	]
+	],
+	saved: Object
 });
 
 const User = mongoose.model('user', UserSchema);
