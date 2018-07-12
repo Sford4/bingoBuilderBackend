@@ -17,12 +17,9 @@ router
 	)
 	.delete(validateParam(schemas.idSchema, 'id'), usersController.deleteUser);
 
-router
-	.route('/save/:id')
-	.patch(
-		[validateParam(schemas.idSchema, 'id'), validateBody(schemas.userOptionalSchema)],
-		usersController.saveUnfinishedBoard
-	);
+router.route('/save/:id').patch([validateParam(schemas.idSchema, 'id')], usersController.saveUnfinishedBoard);
+
+router.route('/login').post(usersController.login);
 
 router
 	.route('/:id/boards')

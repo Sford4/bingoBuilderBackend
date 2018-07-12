@@ -1,5 +1,7 @@
 const User = require('../models/user');
 const Board = require('../models/board');
+var bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 module.exports = {
 	index: async (req, res, next) => {
@@ -10,6 +12,9 @@ module.exports = {
 
 	newUser: async (req, res, next) => {
 		try {
+			bcrypt.hash(req.value.body.password, saltRounds, function(err, hash) {
+				req.value.body.password = hash;
+			});
 			const newUser = new User(req.value.body);
 			// CHECK IF AN EMAIL OR USERNAME WAS ALREADY USED
 			const uniqueUserPromise = User.count({ userName: req.value.body.userName }, (err, count) => {
@@ -40,6 +45,12 @@ module.exports = {
 				});
 			}
 		}
+	},
+
+	login: async (req, res, next) => {
+		const user = await User.findOne({ email: req.body.email.toLowerCase() });
+
+		res.status(200).json(user);
 	},
 
 	getUser: async (req, res, next) => {
@@ -86,11 +97,14 @@ module.exports = {
 	},
 
 	saveUnfinishedBoard: async (req, res, next) => {
+		console.log('made it to save func');
 		const user = await User.findByIdAndUpdate(
 			req.value.params.id,
 			{ saved: req.body.saved },
 			{ multi: true },
-			function(err, numberAffected) {}
+			function(err, numberAffected) {
+				console.log(err);
+			}
 		);
 		res.status(200).json(user);
 	}

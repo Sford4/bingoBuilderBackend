@@ -5,11 +5,10 @@ const BoardSchema = new Schema({
 	title: String,
 	keywords: [String],
 	squares: [String],
-	creator: {
-		type: Schema.Types.ObjectId,
-		ref: 'user'
-	},
+	creator: String,
 	numPlays: Number
+}, {
+    versionKey: false // You should be aware of the outcome after set to false
 });
 
 const Board = mongoose.model('board', BoardSchema);

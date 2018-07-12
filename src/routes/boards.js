@@ -15,4 +15,6 @@ router
 	)
 	.delete(validateParam(schemas.idSchema, 'id'), boardsController.deleteBoard);
 
+router.route('/search').post(boardsController.searchBoards);
+
 module.exports = router;

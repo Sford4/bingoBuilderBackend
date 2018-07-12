@@ -15,7 +15,7 @@ module.exports = {
 		delete newBoard.creator;
 
 		const board = new Board(newBoard);
-		board.creator = creator;
+		board.creator = creator.userName;
 		board.numPlays = 0;
 		board.keywords.unshift(board.title);
 		board.keywords.unshift(creator.userName);
@@ -53,10 +53,24 @@ module.exports = {
 			return res.status(404).json({ error: "Board doesn't exist." });
 		}
 
-		const user = await User.findById(board.creators);
+		const user = await User.findById(board.creator);
 		user.boards.pull(board);
 		await user.save();
 
 		res.status(200).json({ success: true });
+	},
+
+	searchBoards: async (req, res, next) => {
+		let boards = null;
+		if (req.body.filter === 'popular') {
+			boards = await Board.find().sort({ viewCount: -1 }).limit(5);
+		} else if (req.body.filter === 'mine') {
+			boards = await Board.find({ creator: req.body.userId });
+		} else if (!req.body.filter) {
+			boards = await Board.find({ keywords: { $in: req.body.searchTerms } });
+		} else {
+			// TELL THEM THEY USED THE API WRONG
+		}
+		res.status(200).json(boards);
 	}
 };

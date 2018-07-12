@@ -23,32 +23,45 @@ module.exports = {
 	},
 
 	newGame: async (req, res, next) => {
-		const board = await Board.findById(req.value.body.board);
-		const organizer = await User.findById(req.value.body.organizer);
+		let board = await Board.findById(req.value.body.board);
+		let organizer = await User.findById(req.value.body.organizer);
 		for (let i = 0; i < board.squares.length; i++) {
 			board.squares[i] = { text: board.squares[i], selected: false };
 		}
-		const newGame = req.value.body;
+		board.numPlays = board.numPlays + 1;
+		await board.save();
+		let newGame = req.value.body;
 		delete newGame.board;
 		newGame.board = board;
-		newGame.organizer = organizer;
+		console.log('orgnaizer object', organizer);
+		newGame.organizer = organizer.userName;
 		let addCode = shortid.generate();
-		while (!checkIfAddCodeUnique(addCode.substring(0, addCode.length - 3))) {
+		while (!checkIfAddCodeUnique(addCode.substring(0, addCode.length - 4))) {
 			// console.log('addcode not unique, making a new one');
 			addCode = shortid.generate();
 		}
-		newGame.addCode = addCode.substring(0, addCode.length - 3);
-
-		newGame.winner = null;
+		newGame.addCode = addCode.substring(0, addCode.length - 4);
 		const game = new Game(newGame);
 		await game.save();
-
 		res.status(200).json(game);
+	},
+
+	searchGames: async (req, res, next) => {
+		console.log('add code search', req.body);
+		const game = await Game.find({ addCode: req.body.addCode });
+		console.log('game returned', game);
+		if (game[0]._id) {
+			res.status(200).json({ gameId: game[0]._id, organizer: game[0].organizer });
+		} else {
+			res.status(200).json('No games with that add code!');
+		}
 	},
 
 	getGame: async (req, res, next) => {
 		const game = await Game.findById(req.value.params.id);
-
+		// const board = await Board.findById(game.board);
+		// delete game.board;
+		// game.board = board;
 		res.status(200).json(game);
 	},
 

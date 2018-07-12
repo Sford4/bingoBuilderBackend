@@ -5,6 +5,8 @@ const { validateParam, validateBody, schemas } = require('../helpers/routeHelper
 
 router.route('/').get(gamesController.index).post(validateBody(schemas.gameSchema), gamesController.newGame);
 
+router.route('/search').post(gamesController.searchGames);
+
 router
 	.route('/:id')
 	.get(validateParam(schemas.idSchema, 'id'), gamesController.getGame)

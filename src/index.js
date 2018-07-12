@@ -4,6 +4,7 @@ import cors from 'cors';
 const app = express();
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+var io = require('socket.io')(http);
 app.use(morgan('dev'));
 app.use(cors());
 
@@ -57,4 +58,64 @@ app.use((err, req, res, next) => {
 
 	// Respond to ourselves
 	console.error(err);
+});
+
+//
+// WEB SOCKET CODE
+//
+const Game = require('./models/game');
+const Board = require('./models/board');
+
+io.listen(server);
+
+io.on('connection', socket => {
+	console.log('a user connected');
+
+	socket.on('join', async (addCode, userId, gameId) => {
+		console.log('join: ', { addCode: addCode, userId: userId, gameId: gameId });
+		socket.join(addCode);
+		let game = await Game.findById(gameId);
+		if (!game.players.includes(userId)) {
+			game.players.push(userId);
+			game.save();
+		}
+	});
+
+	socket.on('leave', async (addCode, gameId, userId) => {
+		socket.leave(addCode);
+		let game = await Game.findById(gameId);
+		game.players.filter(player => player !== userId);
+		if (!game.players.length) {
+			Game.remove({ _id: gameId });
+		} else {
+			game.save();
+		}
+		console.log('user disconnected', userId);
+	});
+
+	socket.on('squarePressed', async (square, addCode, gameId) => {
+		// update the backend game object
+		let game = await Game.findById(gameId);
+		for (let i = 0; i < game.board.squares.length; i++) {
+			if (square.text === game.board.squares[i].text) {
+				game.board.squares[i].selected = !game.board.squares[i].selected;
+			}
+		}
+		game.save();
+		// LET THE PLAYERS KNOW
+		socket.broadcast.to(addCode).emit('squarePressed', square);
+	});
+
+	socket.on('bingo', (userName, addCode) => {
+		console.log('bingo called by: ' + userName);
+		// update the backend game object
+		socket.broadcast.to(addCode).emit('bingo', userName);
+	});
+
+	socket.on('playAgain', async (addCode, boardId) => {
+		let board = await Board.findById(boardId);
+		board.numPlays = board.numPlays + 1;
+		board.save();
+		socket.broadcast.to(addCode).emit('playAgain');
+	});
 });
