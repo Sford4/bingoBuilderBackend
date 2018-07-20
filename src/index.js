@@ -103,7 +103,7 @@ io.on('connection', socket => {
 		}
 		game.save();
 		// LET THE PLAYERS KNOW
-		socket.broadcast.to(addCode).emit('squarePressed', square);
+		io.in(addCode).emit('squarePressed', square);
 	});
 
 	socket.on('bingo', (userName, addCode) => {
@@ -116,6 +116,6 @@ io.on('connection', socket => {
 		let board = await Board.findById(boardId);
 		board.numPlays = board.numPlays + 1;
 		board.save();
-		socket.broadcast.to(addCode).emit('playAgain');
+		io.in(addCode).emit('playAgain');
 	});
 });
